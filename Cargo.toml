@@ -3,17 +3,19 @@ name = "reconst"
 version = "0.1.0"
 edition = "2021"
 
-[[bin]]
-name = "gen-stereo"
-path = "src/bin/gen_stereo.rs"
-
-[[bin]]
-name = "gen-dynamic"
-path = "src/bin/gen_dynamic.rs"
-
+# Production pipeline
 [[bin]]
 name = "stereo-vo"
 path = "src/bin/stereo_vo.rs"
+
+# Test-data generators (only needed to produce synthetic inputs)
+[[example]]
+name = "gen-stereo"
+path = "examples/gen_stereo.rs"
+
+[[example]]
+name = "gen-dynamic"
+path = "examples/gen_dynamic.rs"
 
 [dependencies]
 image     = "0.25"
