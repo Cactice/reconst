@@ -1,0 +1,23 @@
+[package]
+name = "reconst"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "gen-stereo"
+path = "src/bin/gen_stereo.rs"
+
+[[bin]]
+name = "gen-dynamic"
+path = "src/bin/gen_dynamic.rs"
+
+[[bin]]
+name = "stereo-vo"
+path = "src/bin/stereo_vo.rs"
+
+[dependencies]
+image     = "0.25"
+nalgebra  = { version = "0.33", features = ["serde-serialize"] }
+serde     = { version = "1",    features = ["derive"] }
+serde_json = "1"
+clap      = { version = "4",    features = ["derive"] }
