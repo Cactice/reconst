@@ -1,5 +1,5 @@
 data/
-colmap_ws/
+colmap_ws*/
 __pycache__/
 *.pyc
 .DS_Store
