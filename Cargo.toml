@@ -1,0 +1,30 @@
+[package]
+name = "reconst"
+version = "0.1.0"
+edition = "2021"
+
+# Production pipeline
+[[bin]]
+name = "stereo-vo"
+path = "src/bin/stereo_vo.rs"
+
+# Test-data generators (only needed to produce synthetic inputs)
+[[example]]
+name = "gen-stereo"
+path = "examples/gen_stereo.rs"
+
+[[example]]
+name = "gen-dynamic"
+path = "examples/gen_dynamic.rs"
+
+# Build a COLMAP workspace from ground-truth poses + depth (bypasses VO)
+[[example]]
+name = "gt-workspace"
+path = "examples/gt_workspace.rs"
+
+[dependencies]
+image     = "0.25"
+nalgebra  = { version = "0.33", features = ["serde-serialize"] }
+serde     = { version = "1",    features = ["derive"] }
+serde_json = "1"
+clap      = { version = "4",    features = ["derive"] }
