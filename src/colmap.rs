@@ -37,7 +37,7 @@ pub fn write_workspace(
     dst: &Path,
     calib: &Calib,
     frames: &[ColmapFrame],
-    pts3d: &[[f32; 3]],
+    pts3d: &[([f32; 3], [u8; 3])],
 ) -> std::io::Result<()> {
     let sparse = dst.join("sparse").join("0");
     std::fs::create_dir_all(dst.join("images"))?;
@@ -69,8 +69,8 @@ pub fn write_workspace(
 
     // points3D.txt
     let mut p = String::from("# 3D point list\n# POINT3D_ID X Y Z R G B ERROR TRACK[]\n");
-    for (i, &[x, y, z]) in pts3d.iter().enumerate() {
-        p.push_str(&format!("{} {:.6} {:.6} {:.6} 128 128 128 1.0\n", i + 1, x, y, z));
+    for (i, &([x, y, z], [r, g, b])) in pts3d.iter().enumerate() {
+        p.push_str(&format!("{} {:.6} {:.6} {:.6} {} {} {} 1.0\n", i + 1, x, y, z, r, g, b));
     }
     std::fs::write(sparse.join("points3D.txt"), p)?;
 

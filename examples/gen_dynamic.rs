@@ -29,19 +29,20 @@ struct Args {
 }
 
 // (base_center, radius, color, amplitude_xyz, frequency_xyz)
-const DYNAMIC_SPHERES: &[([f64; 3], f32, [u8; 3], [f64; 3], [f64; 3])] = &[
-    ([0.0,  0.0,  0.0], 0.30, [220,  60,  60], [0.4, 0.0, 0.3], [1.0, 0.0, 1.3]),
-    ([0.7,  0.2,  0.4], 0.20, [ 60, 180,  60], [0.2, 0.3, 0.0], [0.8, 1.2, 0.0]),
-    ([-0.5, 0.4,  0.6], 0.25, [ 60,  90, 220], [0.3, 0.2, 0.3], [1.5, 0.7, 1.0]),
-    ([0.2, -0.5,  0.3], 0.18, [220, 180,  40], [0.0, 0.4, 0.2], [0.0, 1.0, 0.8]),
-    ([-0.3,-0.2, -0.4], 0.22, [160,  60, 200], [0.3, 0.1, 0.3], [1.2, 1.5, 0.9]),
+// (base_center, radius, color, amplitude_xyz, frequency_xyz, texture_freq)
+const DYNAMIC_SPHERES: &[([f64; 3], f32, [u8; 3], [f64; 3], [f64; 3], u8)] = &[
+    ([0.0,  0.0,  0.0], 0.30, [220,  60,  60], [0.4, 0.0, 0.3], [1.0, 0.0, 1.3], 24),
+    ([0.7,  0.2,  0.4], 0.20, [ 60, 180,  60], [0.2, 0.3, 0.0], [0.8, 1.2, 0.0], 22),
+    ([-0.5, 0.4,  0.6], 0.25, [ 60,  90, 220], [0.3, 0.2, 0.3], [1.5, 0.7, 1.0], 20),
+    ([0.2, -0.5,  0.3], 0.18, [220, 180,  40], [0.0, 0.4, 0.2], [0.0, 1.0, 0.8], 26),
+    ([-0.3,-0.2, -0.4], 0.22, [160,  60, 200], [0.3, 0.1, 0.3], [1.2, 1.5, 0.9], 22),
 ];
 
 fn scene_at(t_norm: f64) -> Vec<Sphere> {
     let t = t_norm * TAU;
     DYNAMIC_SPHERES
         .iter()
-        .map(|&([bx, by, bz], radius, color, [ax, ay, az], [fx, fy, fz])| Sphere {
+        .map(|&([bx, by, bz], radius, color, [ax, ay, az], [fx, fy, fz], tex)| Sphere {
             center: Vector3::new(
                 bx + ax * (fx * t).sin(),
                 by + ay * (fy * t).sin(),
@@ -50,7 +51,7 @@ fn scene_at(t_norm: f64) -> Vec<Sphere> {
             .cast::<f32>(),
             radius,
             color,
-            checker_freq: 5,
+            checker_freq: tex,
         })
         .collect()
 }

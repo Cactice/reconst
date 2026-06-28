@@ -22,18 +22,20 @@ struct Args {
     baseline: f64,
     #[arg(long, default_value = "2.5")]
     orbit_radius: f64,
+    #[arg(long, default_value = "80.0", help = "total azimuth sweep in degrees (small = easy tracking)")]
+    arc_deg: f64,
     #[arg(long, default_value = "data/stereo_test")]
     out: PathBuf,
 }
 
 fn spheres() -> Vec<Sphere> {
     vec![
-        Sphere { center: Vector3::new( 0.0,  0.0,  0.0), radius: 0.30, color: [220,  60,  60], checker_freq: 6 },
-        Sphere { center: Vector3::new( 0.7,  0.2,  0.4), radius: 0.20, color: [ 60, 180,  60], checker_freq: 5 },
-        Sphere { center: Vector3::new(-0.5,  0.4,  0.6), radius: 0.25, color: [ 60,  90, 220], checker_freq: 5 },
-        Sphere { center: Vector3::new( 0.2, -0.5,  0.3), radius: 0.18, color: [220, 180,  40], checker_freq: 4 },
-        Sphere { center: Vector3::new(-0.3, -0.2, -0.4), radius: 0.22, color: [160,  60, 200], checker_freq: 5 },
-        Sphere { center: Vector3::new( 0.8, -0.3, -0.2), radius: 0.15, color: [ 40, 200, 200], checker_freq: 4 },
+        Sphere { center: Vector3::new( 0.0,  0.0,  0.0), radius: 0.30, color: [220,  60,  60], checker_freq: 24 },
+        Sphere { center: Vector3::new( 0.7,  0.2,  0.4), radius: 0.20, color: [ 60, 180,  60], checker_freq: 22 },
+        Sphere { center: Vector3::new(-0.5,  0.4,  0.6), radius: 0.25, color: [ 60,  90, 220], checker_freq: 20 },
+        Sphere { center: Vector3::new( 0.2, -0.5,  0.3), radius: 0.18, color: [220, 180,  40], checker_freq: 26 },
+        Sphere { center: Vector3::new(-0.3, -0.2, -0.4), radius: 0.22, color: [160,  60, 200], checker_freq: 22 },
+        Sphere { center: Vector3::new( 0.8, -0.3, -0.2), radius: 0.15, color: [ 40, 200, 200], checker_freq: 28 },
     ]
 }
 
@@ -61,9 +63,12 @@ fn main() {
 
     let scene = spheres();
 
+    let arc = args.arc_deg.to_radians();
+    let denom = (args.frames.max(2) - 1) as f64;
     for i in 0..args.frames {
-        let theta = TAU * i as f64 / args.frames as f64;
-        let phi   = 15f64.to_radians() * (TAU * i as f64 / args.frames as f64).sin();
+        let frac  = i as f64 / denom; // 0..1 across the sweep
+        let theta = arc * (frac - 0.5);
+        let phi   = 12f64.to_radians() * (TAU * frac).sin();
         let c2w   = orbit_c2w(theta, phi, args.orbit_radius);
 
         let (left,  depth) = render_frame(&scene, args.width, args.height, &k, &c2w, 0.0);

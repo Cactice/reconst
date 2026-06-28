@@ -24,6 +24,8 @@ struct Args {
     max_depth: f32,
     #[arg(long, default_value = "2000")]
     max_corners: usize,
+    #[arg(long, default_value = "48", help = "NCC search half-window in px (bound on inter-frame motion; cost ~ this²)")]
+    search: i32,
 }
 
 fn load_frames(dir: &PathBuf) -> Vec<(PathBuf, PathBuf, String)> {
@@ -45,10 +47,11 @@ fn load_frames(dir: &PathBuf) -> Vec<(PathBuf, PathBuf, String)> {
 
 fn depth_to_world(
     depth: &[f32],
+    rgb: &image::RgbImage,
     k: &nalgebra::Matrix3<f64>,
     c2w: &Matrix4<f64>,
     width: u32, height: u32, stride: u32, max_d: f32,
-) -> Vec<[f32; 3]> {
+) -> Vec<([f32; 3], [u8; 3])> {
     let (fx, fy, cx, cy) = (k[(0,0)], k[(1,1)], k[(0,2)], k[(1,2)]);
     let mut pts = Vec::new();
     for row in (0..height).step_by(stride as usize) {
@@ -60,7 +63,8 @@ fn depth_to_world(
                 (row as f64 - cy) / fy * d,
                 d, 1.0,
             );
-            pts.push([p[0] as f32, p[1] as f32, p[2] as f32]);
+            let color = rgb.get_pixel(col, row).0; // sample the source-image colour
+            pts.push(([p[0] as f32, p[1] as f32, p[2] as f32], color));
         }
     }
     pts
@@ -82,21 +86,23 @@ fn main() {
     let mut c2w = Matrix4::<f64>::identity();
     let mut all_c2w:  Vec<Matrix4<f64>> = Vec::new();
     let mut all_names: Vec<String>       = Vec::new();
-    let mut all_pts:   Vec<[f32; 3]>    = Vec::new();
+    let mut all_pts:   Vec<([f32; 3], [u8; 3])> = Vec::new();
 
     let mut prev_gray:    Option<GrayImage>    = None;
     let mut prev_depth:   Option<Vec<f32>>     = None;
     let mut prev_corners: Option<Vec<[f32;2]>> = None;
 
     for (idx, (left_path, right_path, name)) in frames.iter().enumerate() {
-        let left_gray  = image::open(left_path) .expect("read left") .to_luma8();
+        let left_dyn   = image::open(left_path).expect("read left");
+        let left_rgb   = left_dyn.to_rgb8();
+        let left_gray  = left_dyn.to_luma8();
         let right_gray = image::open(right_path).expect("read right").to_luma8();
 
         let disp  = compute_disparity(&left_gray, &right_gray, &cfg);
         let depth = disparity_to_depth(&disp, calib.fx, calib.baseline, cfg.min_disp as f32);
 
         if let (Some(pg), Some(pd), Some(pc)) = (&prev_gray, &prev_depth, &prev_corners) {
-            let tracked = track_features(pg, &left_gray, pc);
+            let tracked = track_features(pg, &left_gray, pc, args.search);
 
             let (mut pts3d, mut pts2d) = (Vec::new(), Vec::new());
             for (&prev_pt, curr_opt) in pc.iter().zip(&tracked) {
@@ -118,7 +124,7 @@ fn main() {
 
         all_c2w.push(c2w);
         all_names.push(name.clone());
-        all_pts.extend(depth_to_world(&depth, &k, &c2w, calib.width, calib.height, args.stride, args.max_depth));
+        all_pts.extend(depth_to_world(&depth, &left_rgb, &k, &c2w, calib.width, calib.height, args.stride, args.max_depth));
 
         prev_corners = Some(detect_corners(&left_gray, args.max_corners));
         prev_gray    = Some(left_gray);

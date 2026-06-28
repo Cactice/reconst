@@ -5,8 +5,20 @@ pub struct Sphere {
     pub center: Vector3<f32>,
     pub radius: f32,
     pub color: [u8; 3],
-    /// Checkerboard frequency on the surface (0 = solid colour, 6 = good for VO)
+    /// Surface texture frequency (0 = solid colour). Higher = more, denser
+    /// feature corners. Texture is a deterministic per-cell random pattern
+    /// (not a repeating checkerboard) so NCC tracking stays unambiguous.
     pub checker_freq: u8,
+}
+
+/// Deterministic hash of integer surface-cell coordinates → brightness in [0,1].
+/// Non-repeating, so every surface patch has a locally unique appearance.
+fn cell_hash(a: i32, b: i32) -> f32 {
+    let mut h = (a.wrapping_mul(73856093) ^ b.wrapping_mul(19349663)) as u32;
+    h ^= h >> 13;
+    h = h.wrapping_mul(0x45d9f3b);
+    h ^= h >> 16;
+    (h & 0xffff) as f32 / 65535.0
 }
 
 fn ray_sphere(ro: Vector3<f32>, rd: Vector3<f32>, c: Vector3<f32>, r: f32) -> f32 {
@@ -79,13 +91,15 @@ pub fn render_frame(
                     let normal = (hit - s.center) / s.radius;
                     let diff   = normal.dot(&light).clamp(0.1, 1.0);
 
-                    // Optional checkerboard texture on sphere surface
+                    // Per-cell random surface texture (non-repeating) for rich,
+                    // locally-unique feature corners.
                     let tex = if s.checker_freq > 0 {
                         let f = s.checker_freq as f32;
                         let phi   = normal[1].asin();          // latitude
                         let theta = normal[2].atan2(normal[0]); // longitude
-                        let even  = ((phi * f).floor() as i32 + (theta * f).floor() as i32) % 2 == 0;
-                        if even { 1.0 } else { 0.45 }
+                        let u = (theta * f).floor() as i32;
+                        let v = (phi * f).floor() as i32;
+                        0.2 + 0.8 * cell_hash(u, v)
                     } else {
                         1.0
                     };

@@ -17,6 +17,11 @@ path = "examples/gen_stereo.rs"
 name = "gen-dynamic"
 path = "examples/gen_dynamic.rs"
 
+# Build a COLMAP workspace from ground-truth poses + depth (bypasses VO)
+[[example]]
+name = "gt-workspace"
+path = "examples/gt_workspace.rs"
+
 [dependencies]
 image     = "0.25"
 nalgebra  = { version = "0.33", features = ["serde-serialize"] }
